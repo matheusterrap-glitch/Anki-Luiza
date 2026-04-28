@@ -18,6 +18,9 @@ import {
   X,
   Database,
   Pencil,
+  PlusCircle,
+  HelpCircle,
+  ChevronRight,
   Clock
 } from 'lucide-react';
 import { Card, SessionMode, SessionConfig } from '@/lib/types';
@@ -407,19 +410,23 @@ export default function Page() {
         setIsSupabaseConfigured(true);
         setGeneralError(null);
       } else {
+        const errorMsgStr = (cardsRes?.error || JSON.stringify(cardsRes) || '').toLowerCase();
+        
         if (cardsRes && cardsRes.error === "Supabase not configured") {
           setIsSupabaseConfigured(false);
-        } else if (cardsRes && cardsRes.error) {
-          setGeneralError(cardsRes.error);
+        } else {
+          setGeneralError(cardsRes?.error || "Erro ao carregar dados do Supabase");
         }
         
-        const errorString = JSON.stringify(cardsRes).toLowerCase();
-        if (cardsRes && (
-          errorString.includes('column') || 
-          errorString.includes('relation') || 
-          errorString.includes('tabela') ||
-          errorString.includes('not found')
-        )) {
+        // Auto-show SQL modal if any schema related error is suspected
+        if (
+          errorMsgStr.includes('column') || 
+          errorMsgStr.includes('relation') || 
+          errorMsgStr.includes('tabela') ||
+          errorMsgStr.includes('not found') ||
+          errorMsgStr.includes('42p01') ||
+          errorMsgStr.includes('42703')
+        ) {
           setShowSqlModal(true);
         }
         setCards([]);
@@ -991,11 +998,20 @@ export default function Page() {
               </h1>
               {view === 'home' && (
                 <>
-                  <div className="flex flex-wrap gap-x-4 gap-y-2 text-zinc-500 font-medium text-sm">
-                    <span className="bg-zinc-100 px-2 py-0.5 rounded-lg">{deckStats.total} total</span>
-                    <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-lg">{deckStats.newCards} inéditas</span>
-                    <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-lg">{deckStats.dueCards} devidas hoje</span>
-                    <span className="bg-rose-50 text-rose-700 px-2 py-0.5 rounded-lg">{deckStats.overdueCards} atrasadas</span>
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-zinc-500 font-medium text-sm">
+                      <span className="bg-zinc-100 px-2 py-0.5 rounded-lg">{deckStats.total} total</span>
+                      <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-lg">{deckStats.newCards} inéditas</span>
+                      <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-lg">{deckStats.dueCards} devidas hoje</span>
+                      <span className="bg-rose-50 text-rose-700 px-2 py-0.5 rounded-lg">{deckStats.overdueCards} atrasadas</span>
+                    </div>
+                    <button 
+                      onClick={() => document.getElementById('beginner-guide')?.scrollIntoView({ behavior: 'smooth' })}
+                      className="ml-auto flex items-center gap-2 text-xs font-bold text-zinc-400 hover:text-indigo-600 transition-colors"
+                    >
+                      <HelpCircle className="w-4 h-4" />
+                      Ajuda com Supabase
+                    </button>
                   </div>
 
                   {/* Table Breakdown */}
@@ -1042,13 +1058,64 @@ export default function Page() {
         {generalError && (
           <div className="mb-8 p-6 bg-rose-50 border border-rose-200 rounded-3xl flex items-start gap-4 text-rose-800">
             <div className="p-2 bg-rose-100 rounded-xl">
-              <XCircle className="w-5 h-5 text-rose-600" />
+              <Database className="w-5 h-5 text-rose-600" />
             </div>
-            <div>
-              <h3 className="font-bold mb-1">Erro no Banco de Dados</h3>
-              <p className="text-sm opacity-90 leading-relaxed">
-                {generalError}
+            <div className="flex-1">
+              <h3 className="font-bold mb-1 text-lg">⚠️ Problema de Configuração detectado</h3>
+              <p className="text-sm opacity-90 leading-relaxed mb-6">
+                {typeof generalError === 'string' ? generalError : 'Não conseguimos conectar ao seu banco de dados Supabase.'}
               </p>
+
+              <div className="space-y-6">
+                {/* Step 1 */}
+                <div className="bg-white/50 p-4 rounded-2xl border border-rose-100">
+                  <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
+                    <span className="w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center text-[10px]">1</span>
+                    Pegar as chaves no Supabase
+                  </h4>
+                  <p className="text-xs text-rose-700/70 mb-2">
+                    Vá em <b>Project Settings (Engrenagem)</b> {">"} <b>API</b> no Supabase. Copie a <b>URL</b> e a <b>Anon Key</b>.
+                  </p>
+                </div>
+
+                {/* Step 2 */}
+                <div className="bg-white/50 p-4 rounded-2xl border border-rose-100">
+                  <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
+                    <span className="w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center text-[10px]">2</span>
+                    Colar no AI Studio
+                  </h4>
+                  <p className="text-xs text-rose-700/70 mb-2">
+                    Clique no botão <b>Settings (Engrenagem)</b> no canto superior direito desta página (no editor) e cole nos campos correspondentes.
+                  </p>
+                </div>
+
+                {/* Step 3 */}
+                <div className="bg-white/50 p-4 rounded-2xl border border-rose-100">
+                  <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
+                    <span className="w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center text-[10px]">3</span>
+                    Rodar o código SQL
+                  </h4>
+                  <p className="text-xs text-rose-700/70 mb-3">
+                    Se o erro diz que &quot;coluna não existe&quot; ou &quot;tabela não encontrada&quot;, você precisa rodar o comando SQL novamente para garantir que tudo está certo.
+                  </p>
+                  <button 
+                    onClick={() => setShowSqlModal(true)}
+                    className="w-full py-2 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700 transition-colors"
+                  >
+                    Abrir Código SQL para Copiar
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-8 flex flex-wrap gap-2">
+                <button 
+                  onClick={() => fetchData()}
+                  className="px-6 py-3 bg-white text-rose-600 border border-rose-200 rounded-2xl text-sm font-bold hover:bg-rose-50 transition-colors shadow-sm flex items-center gap-2"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Já fiz tudo, tentar carregar agora
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -1207,6 +1274,86 @@ export default function Page() {
                     <p className="text-[10px] text-zinc-400">Últimos 3 dias</p>
                   </div>
                 </button>
+              </div>
+
+              {/* Beginner Guide Section */}
+              <div id="beginner-guide" className="mt-12 bg-zinc-50 border border-zinc-100 rounded-3xl p-8 scroll-mt-20">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-zinc-200 rounded-xl">
+                    <HelpCircle className="w-5 h-5 text-zinc-600" />
+                  </div>
+                  <h2 className="text-xl font-bold">Problemas com o Supabase?</h2>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <h3 className="font-bold flex items-center gap-2 text-zinc-700">
+                      <div className="w-6 h-6 bg-zinc-200 rounded-full flex items-center justify-center text-xs">1</div>
+                      Passo a Passo do SQL
+                    </h3>
+                    <ul className="text-sm text-zinc-500 space-y-3 ml-2">
+                      <li className="flex gap-2">
+                        <span className="text-blue-500 font-bold">•</span>
+                        Entre no painel do Supabase.
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-blue-500 font-bold">•</span>
+                        No menu lateral, clique em <strong>SQL Editor</strong> (ícone de terminal <code>{">_"}</code>).
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-blue-500 font-bold">•</span>
+                        Clique em <strong>New Query</strong>.
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-blue-500 font-bold">•</span>
+                        Copie o código SQL que aparece no botão abaixo e cole lá.
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-blue-500 font-bold">•</span>
+                        Clique no botão verde <strong>Run</strong>.
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="font-bold flex items-center gap-2 text-zinc-700">
+                      <div className="w-6 h-6 bg-zinc-200 rounded-full flex items-center justify-center text-xs">2</div>
+                      Ações Rápidas
+                    </h3>
+                    <div className="flex flex-col gap-3">
+                      <button 
+                        onClick={() => setShowSqlModal(true)}
+                        className="w-full p-4 bg-white border border-zinc-200 rounded-2xl text-left hover:border-indigo-300 transition-all shadow-sm flex items-center justify-between group"
+                      >
+                        <div>
+                          <p className="font-bold text-sm">Ver Código SQL</p>
+                          <p className="text-[10px] text-zinc-400">Clique para copiar o comando de criação</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-zinc-300 group-hover:text-indigo-400" />
+                      </button>
+                      
+                      <button 
+                        onClick={async () => {
+                          try {
+                            const res = await fetch('/api/reload-schema', { method: 'POST' });
+                            const data = await res.json();
+                            alert(data.message || "Cache atualizado!");
+                            fetchData();
+                          } catch (e) {
+                            alert("Erro ao conectar.");
+                          }
+                        }}
+                        className="w-full p-4 bg-white border border-zinc-200 rounded-2xl text-left hover:border-indigo-300 transition-all shadow-sm flex items-center justify-between group"
+                      >
+                        <div>
+                          <p className="font-bold text-sm">Atualizar Schema Cache</p>
+                          <p className="text-[10px] text-zinc-400">Se o banco existe mas dá erro, use isso</p>
+                        </div>
+                        <RotateCcw className="w-4 h-4 text-zinc-300 group-hover:text-amber-400" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -1966,47 +2113,37 @@ export default function Page() {
                 <div className="relative group">
                   <pre className="bg-zinc-900 text-zinc-300 p-6 rounded-2xl text-xs overflow-x-auto font-mono leading-relaxed">
 {`-- SQL para criar a tabela independente
-DO $$ 
-DECLARE 
-    tbl TEXT;
-    tables TEXT[] := ARRAY['tjsc'];
-BEGIN 
-    FOREACH tbl IN ARRAY tables LOOP
-        EXECUTE format('
-            CREATE TABLE IF NOT EXISTS %I (
-                id TEXT PRIMARY KEY,
-                materia TEXT,
-                question TEXT NOT NULL,
-                correct TEXT NOT NULL,
-                fundamento TEXT,
-                review_date TEXT,
-                days_interval INTEGER DEFAULT 0,
-                hits INTEGER DEFAULT 0,
-                misses INTEGER DEFAULT 0,
-                ultima_resposta TEXT,
-                ultimo_resultado TEXT,
-                ultima_classificacao TEXT,
-                created_at TIMESTAMPTZ DEFAULT NOW()
-            );
+CREATE TABLE IF NOT EXISTS tjsc (
+    id TEXT PRIMARY KEY,
+    materia TEXT,
+    question TEXT NOT NULL,
+    correct TEXT NOT NULL,
+    fundamento TEXT,
+    review_date TEXT,
+    days_interval INTEGER DEFAULT 0,
+    hits INTEGER DEFAULT 0,
+    misses INTEGER DEFAULT 0,
+    ultima_resposta TEXT,
+    ultimo_resultado TEXT,
+    ultima_classificacao TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-            -- Ensure columns exist if table was already there
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS materia TEXT;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS fundamento TEXT;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS review_date TEXT;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS days_interval INTEGER DEFAULT 0;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS hits INTEGER DEFAULT 0;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS misses INTEGER DEFAULT 0;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS ultima_resposta TEXT;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS ultimo_resultado TEXT;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS ultima_classificacao TEXT;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+-- Garantir que colunas existem se a tabela já existir
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS materia TEXT;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS fundamento TEXT;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS review_date TEXT;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS days_interval INTEGER DEFAULT 0;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS hits INTEGER DEFAULT 0;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS misses INTEGER DEFAULT 0;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS ultima_resposta TEXT;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS ultimo_resultado TEXT;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS ultima_classificacao TEXT;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
 
-            ALTER TABLE %I ENABLE ROW LEVEL SECURITY;
-            DROP POLICY IF EXISTS "Allow all access" ON %I;
-            CREATE POLICY "Allow all access" ON %I FOR ALL USING (true) WITH CHECK (true);
-        ', tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl);
-    END LOOP;
-END $$;
+ALTER TABLE tjsc ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all access" ON tjsc;
+CREATE POLICY "Allow all access" ON tjsc FOR ALL USING (true) WITH CHECK (true);
 
 -- Tabela de Estatísticas
 CREATE TABLE IF NOT EXISTS session_stats (
@@ -2022,52 +2159,47 @@ CREATE TABLE IF NOT EXISTS session_stats (
 ALTER TABLE session_stats ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all access" ON session_stats;
 CREATE POLICY "Allow all access" ON session_stats FOR ALL USING (true) WITH CHECK (true);
+
+-- IMPORTANTE: Forçar atualização do cache do Supabase
+NOTIFY pgrst, 'reload schema';
 `}
                   </pre>
                   <button 
                     onClick={() => {
-                      navigator.clipboard.writeText(`DO $$ 
-DECLARE 
-    tbl TEXT;
-    tables TEXT[] := ARRAY['tjsc'];
-BEGIN 
-    FOREACH tbl IN ARRAY tables LOOP
-        EXECUTE format('
-            CREATE TABLE IF NOT EXISTS %I (
-                id TEXT PRIMARY KEY,
-                materia TEXT,
-                question TEXT NOT NULL,
-                correct TEXT NOT NULL,
-                fundamento TEXT,
-                review_date TEXT,
-                days_interval INTEGER DEFAULT 0,
-                hits INTEGER DEFAULT 0,
-                misses INTEGER DEFAULT 0,
-                ultima_resposta TEXT,
-                ultimo_resultado TEXT,
-                ultima_classificacao TEXT,
-                created_at TIMESTAMPTZ DEFAULT NOW()
-            );
+                      navigator.clipboard.writeText(`-- SQL para criar a tabela independente
+CREATE TABLE IF NOT EXISTS tjsc (
+    id TEXT PRIMARY KEY,
+    materia TEXT,
+    question TEXT NOT NULL,
+    correct TEXT NOT NULL,
+    fundamento TEXT,
+    review_date TEXT,
+    days_interval INTEGER DEFAULT 0,
+    hits INTEGER DEFAULT 0,
+    misses INTEGER DEFAULT 0,
+    ultima_resposta TEXT,
+    ultimo_resultado TEXT,
+    ultima_classificacao TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-            -- Ensure columns exist if table was already there
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS materia TEXT;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS fundamento TEXT;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS review_date TEXT;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS days_interval INTEGER DEFAULT 0;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS hits INTEGER DEFAULT 0;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS misses INTEGER DEFAULT 0;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS ultima_resposta TEXT;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS ultimo_resultado TEXT;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS ultima_classificacao TEXT;
-            ALTER TABLE %I ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+-- Garantir que colunas existem se a tabela já existir
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS materia TEXT;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS fundamento TEXT;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS review_date TEXT;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS days_interval INTEGER DEFAULT 0;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS hits INTEGER DEFAULT 0;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS misses INTEGER DEFAULT 0;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS ultima_resposta TEXT;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS ultimo_resultado TEXT;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS ultima_classificacao TEXT;
+ALTER TABLE tjsc ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
 
-            ALTER TABLE %I ENABLE ROW LEVEL SECURITY;
-            DROP POLICY IF EXISTS "Allow all access" ON %I;
-            CREATE POLICY "Allow all access" ON %I FOR ALL USING (true) WITH CHECK (true);
-        ', tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl);
-    END LOOP;
-END $$;
+ALTER TABLE tjsc ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all access" ON tjsc;
+CREATE POLICY "Allow all access" ON tjsc FOR ALL USING (true) WITH CHECK (true);
 
+-- Tabela de Estatísticas
 CREATE TABLE IF NOT EXISTS session_stats (
     id BIGSERIAL PRIMARY KEY,
     materia TEXT,
@@ -2080,7 +2212,10 @@ CREATE TABLE IF NOT EXISTS session_stats (
 );
 ALTER TABLE session_stats ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all access" ON session_stats;
-CREATE POLICY "Allow all access" ON session_stats FOR ALL USING (true) WITH CHECK (true);`);
+CREATE POLICY "Allow all access" ON session_stats FOR ALL USING (true) WITH CHECK (true);
+
+-- IMPORTANTE: Forçar atualização do cache do Supabase
+NOTIFY pgrst, 'reload schema';`);
                       console.log('SQL copiado!');
                     }}
                     className="absolute top-4 right-4 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg backdrop-blur-md transition-all opacity-0 group-hover:opacity-100"

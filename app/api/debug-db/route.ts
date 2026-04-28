@@ -31,18 +31,42 @@ export async function GET() {
   }
 
   const supabase = getSupabase();
-  if (!supabase) return NextResponse.json({ error: "Failed to initialize Supabase client" }, { status: 500 });
-  
-  const { data, error } = await supabase.from(FLASHCARD_TABLES[0]).select("*").limit(1);
-  if (error) return NextResponse.json({ 
-    error: error.message, 
-    details: error,
-    hint: "Verifique se as tabelas foram criadas no Supabase usando o SQL Editor."
+  if (!supabase) return NextResponse.json({ 
+    error: "Failed to initialize Supabase client",
+    hint: "As credenciais estão presentes, mas o cliente não pôde ser criado. Verifique se a URL está no formato correto (https://xyz.supabase.co)."
   }, { status: 500 });
   
-  return NextResponse.json({ 
-    message: "Conexão OK", 
-    sample: data?.[0] || "Nenhum card encontrado",
-    columns: data?.[0] ? Object.keys(data[0]) : "Não foi possível determinar as colunas (tabela vazia)"
-  });
+  try {
+    const { data, error } = await supabase.from(FLASHCARD_TABLES[0]).select("*").limit(1);
+    
+    if (error) {
+       // Check for specific error codes
+       let customHint = "Verifique se as tabelas foram criadas no Supabase usando o SQL Editor.";
+       if (error.code === '42501') customHint = "Erro de Permissão (RLS). Verifique se você criou a POLICY 'Allow all access' conforme o script SQL.";
+       if (error.code === '42P01') customHint = "Tabela não encontrada. Certifique-se de que a tabela 'tjsc' foi criada exatamente com esse nome (em minúsculo).";
+       if (error.message && error.message.includes('API key')) customHint = "A chave API (ANON KEY) parece inválida ou expirou.";
+
+       return NextResponse.json({ 
+        error: error.message, 
+        code: error.code,
+        details: error,
+        hint: customHint,
+        url_used: url
+      }, { status: 500 });
+    }
+    
+    return NextResponse.json({ 
+      message: "Conexão OK", 
+      project_url: url,
+      table_checked: FLASHCARD_TABLES[0],
+      sample: data?.[0] || "Nenhum card encontrado (tabela vazia)",
+      columns: data?.[0] ? Object.keys(data[0]) : "Não foi possível determinar as colunas (tabela vazia)"
+    });
+  } catch (err: any) {
+    return NextResponse.json({ 
+      error: "Exceção inesperada", 
+      message: err.message,
+      hint: "Ocorreu um erro ao tentar se comunicar com o Supabase. Verifique se o projeto está ativo e a URL está correta."
+    }, { status: 500 });
+  }
 }

@@ -26,11 +26,13 @@ export async function GET() {
           .range(from, from + chunkSize - 1);
 
         if (error) {
-          console.error(`Error fetching from ${table}:`, JSON.stringify(error, null, 2));
+          console.error(`[Supabase Error] Table: ${table}`, error);
+          const errorMsg = error.message || (typeof error === 'object' ? JSON.stringify(error) : String(error));
           return NextResponse.json({ 
-            error: `Erro na tabela ${table}: ${error.message || 'Erro desconhecido'}`, 
+            error: `Erro na tabela "${table}": ${errorMsg}`, 
             details: error,
             code: error.code,
+            hint: error.hint,
             table: table
           }, { status: 500 });
         }
