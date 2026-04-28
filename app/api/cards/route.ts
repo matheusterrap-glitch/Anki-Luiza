@@ -26,10 +26,11 @@ export async function GET() {
           .range(from, from + chunkSize - 1);
 
         if (error) {
-          console.error(`Error fetching from ${table}:`, error);
+          console.error(`Error fetching from ${table}:`, JSON.stringify(error, null, 2));
           return NextResponse.json({ 
-            error: `Erro na tabela ${table}: ${error.message}`, 
+            error: `Erro na tabela ${table}: ${error.message || 'Erro desconhecido'}`, 
             details: error,
+            code: error.code,
             table: table
           }, { status: 500 });
         }

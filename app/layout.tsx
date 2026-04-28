@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Anki Sheets Modern",
+  title: "Cards para Concurso - Luiza",
   description: "Sistema de Flashcards Inteligente",
 };
 

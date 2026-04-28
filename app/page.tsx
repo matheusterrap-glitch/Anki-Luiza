@@ -987,7 +987,7 @@ export default function Page() {
             <div>
               <h1 className="text-4xl font-bold tracking-tight mb-2 flex items-center gap-3">
                 <Brain className="w-10 h-10 text-indigo-600" />
-                Cards para Concurso - MatheusT
+                Cards para Concurso - Luiza
               </h1>
               {view === 'home' && (
                 <>
@@ -1988,10 +1988,23 @@ BEGIN
                 ultima_classificacao TEXT,
                 created_at TIMESTAMPTZ DEFAULT NOW()
             );
+
+            -- Ensure columns exist if table was already there
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS materia TEXT;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS fundamento TEXT;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS review_date TEXT;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS days_interval INTEGER DEFAULT 0;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS hits INTEGER DEFAULT 0;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS misses INTEGER DEFAULT 0;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS ultima_resposta TEXT;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS ultimo_resultado TEXT;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS ultima_classificacao TEXT;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+
             ALTER TABLE %I ENABLE ROW LEVEL SECURITY;
             DROP POLICY IF EXISTS "Allow all access" ON %I;
             CREATE POLICY "Allow all access" ON %I FOR ALL USING (true) WITH CHECK (true);
-        ', tbl, tbl, tbl, tbl);
+        ', tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl);
     END LOOP;
 END $$;
 
@@ -2035,10 +2048,23 @@ BEGIN
                 ultima_classificacao TEXT,
                 created_at TIMESTAMPTZ DEFAULT NOW()
             );
+
+            -- Ensure columns exist if table was already there
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS materia TEXT;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS fundamento TEXT;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS review_date TEXT;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS days_interval INTEGER DEFAULT 0;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS hits INTEGER DEFAULT 0;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS misses INTEGER DEFAULT 0;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS ultima_resposta TEXT;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS ultimo_resultado TEXT;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS ultima_classificacao TEXT;
+            ALTER TABLE %I ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+
             ALTER TABLE %I ENABLE ROW LEVEL SECURITY;
             DROP POLICY IF EXISTS "Allow all access" ON %I;
             CREATE POLICY "Allow all access" ON %I FOR ALL USING (true) WITH CHECK (true);
-        ', tbl, tbl, tbl, tbl);
+        ', tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl, tbl);
     END LOOP;
 END $$;
 
